@@ -65,9 +65,34 @@ builder.defineMetaHandler((args) => {
 
 async function resolveStreams(args) {
   return cacheWrapStream(args.id, () => newLimiter(() => streamHandler(args)
-      .then(records => records
-          .sort((a, b) => b.torrent.seeders - a.torrent.seeders || b.torrent.uploadDate - a.torrent.uploadDate)
-          .map(record => toStreamInfo(record)))));
+      .then(records => {
+          // filter high quality first
+          let filtered = records.filter(r => {
+            const title = r.torrent.title.toLowerCase();
+            return title.includes("1080p") && (title.includes("bluray") || title.includes("web-dl"));
+          });
+        
+          // fallback if no high quality found
+          if (!filtered.length) {
+            filtered = records.filter(r => {
+              const title = r.torrent.title.toLowerCase();
+              return !title.includes("cam") && !title.includes("telesync") && !title.includes("scr");
+            });
+          }
+        
+          // if *still* no results, use all (as last resort)
+          if (!filtered.length) {
+            filtered = records;
+          }
+        
+          // sort by seeders
+          filtered.sort((a, b) => (b.torrent.seeders || 0) - (a.torrent.seeders || 0));
+        
+          // pick the best one (auto-play behavior)
+          const best = filtered[0];
+          return best ? [toStreamInfo(best)] : [];
+        })
+
 }
 
 async function streamHandler(args) {
