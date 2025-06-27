@@ -1,7 +1,6 @@
 {
-  "name": "stremio-torrentio",
-  "version": "1.0.14",
-  "exports": "./index.js",
+  "name": "torrentio-auto-stream",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "start": "node api/index.js"
